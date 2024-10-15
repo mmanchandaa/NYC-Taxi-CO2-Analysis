@@ -15,32 +15,76 @@ Steps to Reproduce the Project:
     a. Access Azure Databricks:
     b. Set up a Databricks Workspace in Azure.
     c. Mount the Blob storage to Databricks:
+   # Unmount the existing directory
+dbutils.fs.unmount("/mnt/nyctaxi")
+
     Use the following Python code to mount the storage container to Databricks:
     
-        #python
-        # Replace with your Azure Storage credentials
-        storage_account_name = "your_storage_account"
-        container_name = "your_container"
-        sas_token = "your_sas_token"
+        # Set variables for mounting
+storage_account_name = "q333"  # Replace with your storage account name
+container_name = "mmmmmmm"  # Replace with your container name
+sas_token = "sv=2022-11-02&ss=bfqt&srt=sco&sp=rwdlacupiytfx&se=2024-10-14T10:23:53Z&st=2024-10-13T02:23:53Z&spr=https&sig=Lv%2BlEUxmJ%2FMj4PdK1vuxWxBmzpM2JpjbWmMRDWluXzU%3D"
 
-        dbutils.fs.mount(
-          source = f"wasbs://{container_name}@{storage_account_name}.blob.core.windows.net",
-          mount_point = "/mnt/nyctaxi",
-          extra_configs = {f"fs.azure.sas.{container_name}.{storage_account_name}.blob.core.windows.net": sas_token}
-        )
+# Mount the Blob Storage container to Databricks
+dbutils.fs.mount(
+    source = f"wasbs://{container_name}@{storage_account_name}.blob.core.windows.net",
+    mount_point = "/mnt/nyctaxi",  # Specify your mount point here
+    extra_configs = {f"fs.azure.sas.{container_name}.{storage_account_name}.blob.core.windows.net": sas_token}
+)
+
+# Verify the mount by listing files in the mounted container
+display(dbutils.fs.ls("/mnt/nyctaxi"))
 
 
-3. Process Data in Databricks
+
+
+4. Process Data in Databricks
 
   a. Load the Parquet data:
   Load the 12 .parquet files for each month into Databricks using the spark.read.parquet() method.
   
   b. Calculate fuel consumption and CO2 emissions:
   Use the following formula to calculate the fuel consumed and CO2 emissions for each trip:
+  # Calculate fuel consumed and CO2 emissions
+combined_df = combined_df.withColumn('fuel_consumed_gallons', combined_df['trip_distance'] / 22)
+combined_df = combined_df.withColumn('co2_emissions_kg', combined_df['fuel_consumed_gallons'] * 8.89)
 
-    #  Python code to calculate emissions
-    df = df.withColumn('fuel_consumed_gallons', df['trip_distance'] / 22)
-    df = df.withColumn('co2_emissions_kg', df['fuel_consumed_gallons'] * 8.89)
+# Show the updated DataFrame with emissions
+combined_df.select('trip_distance', 'fuel_consumed_gallons', 'co2_emissions_kg').show(5)
+
+
+
+   # Convert the correct pickup date column to a date type (using `tpep_pickup_datetime`)
+from pyspark.sql.functions import to_date
+
+# Use the correct column name `tpep_pickup_datetime`
+combined_df = combined_df.withColumn('pickup_date', to_date(combined_df['tpep_pickup_datetime']))
+
+# Group by day and sum the emissions
+emissions_per_day = combined_df.groupBy('pickup_date').sum('co2_emissions_kg')
+
+# Rename the column for clarity
+emissions_per_day = emissions_per_day.withColumnRenamed('sum(co2_emissions_kg)', 'total_emissions')
+
+# Show the emissions per day
+emissions_per_day.show(5)
+
+
+# Filter rides with 1-2 passengers
+group_1_df = combined_df.filter((combined_df['passenger_count'] == 1) | (combined_df['passenger_count'] == 2))
+
+# Filter rides with 3 or more passengers
+group_2_df = combined_df.filter(combined_df['passenger_count'] >= 3)
+
+# Group and sum emissions per day for both groups
+group_1_emissions = group_1_df.groupBy('pickup_date').sum('co2_emissions_kg').withColumnRenamed('sum(co2_emissions_kg)', 'group_1_emissions')
+group_2_emissions = group_2_df.groupBy('pickup_date').sum('co2_emissions_kg').withColumnRenamed('sum(co2_emissions_kg)', 'group_2_emissions')
+
+# Join the two groups to compare
+emissions_comparison = group_1_emissions.join(group_2_emissions, 'pickup_date')
+
+# Show the comparison
+emissions_comparison.show(5)
 
   c. Create passenger group categories:
   Split passengers into two groups: 1-2 passengers and 3 or more passengers.
@@ -56,6 +100,32 @@ Steps to Reproduce the Project:
 4. Generate Visualizations
   Compare emissions based on passenger groups:
   Use matplotlib in Databricks to visualize the emissions by date and passenger group:
+
+
+# Import required libraries
+import matplotlib.pyplot as plt
+import pyspark.sql.functions as F
+
+# Group data by passenger group and pickup datetime (date)
+emissions_per_day = df.groupBy(df['pickup_datetime'].cast('date').alias('pickup_date'), 'passenger_group') \
+    .agg(F.sum('co2_emissions_kg').alias('total_emissions_kg')) \
+    .orderBy('pickup_date')
+
+# Convert to pandas dataframe
+emissions_per_day_pandas = emissions_per_day.toPandas()
+
+# Create a plot
+plt.figure(figsize=(10, 6))
+for group, color in zip(emissions_per_day_pandas['passenger_group'].unique(), ['blue', 'green']):
+    subset = emissions_per_day_pandas[emissions_per_day_pandas['passenger_group'] == group]
+    plt.plot(subset['pickup_date'], subset['total_emissions_kg'], label=group, color=color)
+
+plt.xlabel('Date')
+plt.ylabel('Total Emissions (kg)')
+plt.title('Daily Emissions Comparison: 1-2 Passengers vs 3+ Passengers')
+plt.legend()
+plt.show()
+
 
         import matplotlib.pyplot as plt
         # Group data by passenger group and date
@@ -73,6 +143,65 @@ Steps to Reproduce the Project:
 
   Store the resulting visualizations:
   Save the generated plots in the /results directory.
+# Aggregate emissions by fare amount ranges
+df_fare_analysis = df.groupBy('fare_amount').agg(F.sum('co2_emissions_kg').alias('total_emissions_kg')).orderBy('fare_amount')
+
+# Convert to pandas and plot
+fare_analysis_pandas = df_fare_analysis.toPandas()
+
+# Plot
+plt.figure(figsize=(10, 6))
+plt.plot(fare_analysis_pandas['fare_amount'], fare_analysis_pandas['total_emissions_kg'], color='blue', label='Fare vs Emissions')
+plt.title('Total Emissions by Fare Amount')
+plt.xlabel('Fare Amount (USD)')
+plt.ylabel('Total Emissions (kg)')
+plt.legend()
+plt.show()
+
+
+from pyspark.sql.functions import hour
+#peakemissionhours
+
+# Extract hour from pickup_datetime
+df = df.withColumn('pickup_hour', hour(df['pickup_datetime']))
+
+# Group by pickup hour and sum emissions
+df_hourly_emissions = df.groupBy('pickup_hour').agg(F.sum('co2_emissions_kg').alias('total_emissions_kg')).orderBy('pickup_hour')
+
+# Convert to pandas and plot
+hourly_emissions_pandas = df_hourly_emissions.toPandas()
+
+# Plot
+plt.figure(figsize=(10, 6))
+plt.plot(hourly_emissions_pandas['pickup_hour'], hourly_emissions_pandas['total_emissions_kg'], color='red', label='Hourly Emissions')
+plt.title('Total Emissions by Hour of Day')
+plt.xlabel('Hour of Day')
+plt.ylabel('Total Emissions (kg)')
+plt.legend()
+plt.show()
+
+from pyspark.sql.functions import month
+
+# Create a season column based on the month
+df = df.withColumn('season', 
+                   F.when(month(df['pickup_datetime']).isin(12, 1, 2), 'Winter')
+                   .when(month(df['pickup_datetime']).isin(3, 4, 5), 'Spring')
+                   .when(month(df['pickup_datetime']).isin(6, 7, 8), 'Summer')
+                   .when(month(df['pickup_datetime']).isin(9, 10, 11), 'Fall'))
+
+# Group by season and calculate total emissions
+df_seasonal_emissions = df.groupBy('season').agg(F.sum('co2_emissions_kg').alias('total_emissions_kg'))
+
+# Convert to pandas and plot
+seasonal_emissions_pandas = df_seasonal_emissions.toPandas()
+
+# Plot
+plt.figure(figsize=(10, 6))
+plt.bar(seasonal_emissions_pandas['season'], seasonal_emissions_pandas['total_emissions_kg'], color='purple')
+plt.title('Total Emissions by Season')
+plt.xlabel('Season')
+plt.ylabel('Total Emissions (kg)')
+plt.show()
 5. View Results
 Results: The results, including the processed data and visualizations, can be found in the /results directory. For example, the chart comparing daily emissions for different passenger groups.
 
