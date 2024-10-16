@@ -73,7 +73,7 @@ This project demonstrates how to upload files into an Azure Storage Account cont
 
 1. Clone this GitHub repository:
    ```bash
-   git clone https://github.com/your-username/your-repo.git
+   git clone https://github.com/mmanchandaa/
    ```
 2. Follow the setup steps to upload data to Azure Storage.
 3. Use Databricks on Azure to run the Python scripts included in the repository.
