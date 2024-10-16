@@ -82,15 +82,18 @@ This project demonstrates how to upload files into an Azure Storage Account cont
 
 ## **Project Files**
 
-- `co2_emissions_analysis.py`: Contains the Python code for processing and analyzing the CO2 emissions.
-- `data_processing_notebook.ipynb`: Databricks notebook with step-by-step data processing instructions.
-- `LICENSE`: License information for the project.
+- `q333333.ipynb`: Databricks notebook with step-by-step data processing instructions.
 
 ---
 
 ## **Screenshots**
 
-Include relevant screenshots of the Databricks notebooks and Azure pipeline setup.
+Screenshots of the Databricks notebooks and Azure pipeline setup.
+![image](https://github.com/user-attachments/assets/01380e11-f0a5-40f6-8b0f-a39ad1965d1d)
+![image](https://github.com/user-attachments/assets/940a3dbe-1a39-4606-afca-1f4db2960b60)
+![image](https://github.com/user-attachments/assets/3fb6c361-ef3f-46eb-99cd-a91b529fd1dd)
+![image](https://github.com/user-attachments/assets/7b1a2580-9a56-4725-b126-e5dfce55b8fb)
+![image](https://github.com/user-attachments/assets/b5188626-f003-45af-8cbb-01805bac46b2)
 
 ---
 
@@ -100,17 +103,10 @@ This project demonstrates how to efficiently manage and process large datasets i
 
 ---
 
-## **License**
-
-This project is licensed under the MIT License. See the LICENSE file for more information.
-
----
-
 ## **Links**
 
-- **GitHub Profile**: [Your GitHub Profile](https://github.com/your-username)
-- **Project Repository**: [Project Link](https://github.com/your-username/your-repo)
+- **GitHub Profile**: https://github.com/mmanchandaa
+- **Project Repository**: https://github.com/mmanchandaa/NYC-Taxi-CO2-Analysis
 
 ---
 
-This README structure will fulfill the assignment requirements, guiding others to understand and run your project while showcasing your skills on GitHub. You can create your repository and upload the necessary code, dataset links, and notebook files.
