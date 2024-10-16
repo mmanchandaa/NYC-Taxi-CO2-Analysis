@@ -77,7 +77,9 @@ This project demonstrates how to upload files into an Azure Storage Account cont
 
 ## **Screenshots**
 
-Screenshots of the Databricks notebooks and Azure pipeline setup. ![image](https://github.com/user-attachments/assets/01380e11-f0a5-40f6-8b0f-a39ad1965d1d)
+Screenshots of the Databricks notebooks and Azure pipeline setup.##
+
+![image](https://github.com/user-attachments/assets/01380e11-f0a5-40f6-8b0f-a39ad1965d1d)
 ![image](https://github.com/user-attachments/assets/940a3dbe-1a39-4606-afca-1f4db2960b60)
 ![image](https://github.com/user-attachments/assets/3fb6c361-ef3f-46eb-99cd-a91b529fd1dd)
 ![image](https://github.com/user-attachments/assets/7b1a2580-9a56-4725-b126-e5dfce55b8fb)
